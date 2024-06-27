@@ -1,0 +1,33 @@
+{"action"=>"register", "value"=>["gatherer", 2004]}
+{"action"=>"register", "value"=>["attacker", 2003]}
+{"action"=>"register", "value"=>["scout", 2002]}
+----------------------Tasks-----------------------
+0: visit(scout)
+1: visit(scout)
+---------------------Planning---------------------
+Time: 5.817413330078125e-05s
+-----------------------Plan-----------------------
+0: visit_scout(scout base forest)
+1: visit_scout(scout forest base)
+2: visit_scout(scout base mine)
+3: visit_scout(scout mine base)
+{"action"=>"found_resource", "value"=>["wood", "forest"]}
+{"action"=>"finished_plan"}
+finished
+{:conn=>#<TCPSocket:fd 15, AF_INET6, ::1, 2000>, :busy=>false}
+----------------------Tasks-----------------------
+0: grow(gatherer scout attacker)
+---------------------Planning---------------------
+Time: 8.0108642578125e-05s
+-----------------------Plan-----------------------
+0: move_scout(scout base forest)
+1: map(scout wood enemy forest)
+2: move_scout(scout forest base)
+3: move(gatherer base forest)
+4: pickup(gatherer wood)
+5: move(gatherer forest base)
+6: drop(gatherer wood)
+{"action"=>"found_enemy", "value"=>["enemy", "forest"]}
+{"action"=>"failed_plan"}
+{"action"=>"close"}
+{"action"=>"close"}

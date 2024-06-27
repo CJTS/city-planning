@@ -1,0 +1,265 @@
+(define (domain basic)
+  (:requirements :hierarchy :negative-preconditions :method-preconditions)
+  (:types
+    gatherer scout attacker enemy location resource
+  )
+
+  (:predicates
+    (on ?gatherer - gatherer ?location - location)
+    (on ?scout - scout ?location - location)
+    (on ?attacker - attacker ?location - location)
+    (on ?enemy - enemy ?location - location)
+    (on ?resource - resource ?location - location)
+    (visited ?location - location)
+
+    (exist ?resource - resource ?location - location)
+    (exist ?enemy - enemy ?location - location)
+    (have ?gatherer - gatherer ?resource - resource)
+    (empty ?gatherer - gatherer)
+  )
+
+  (:task grow
+    :parameters (?gatherer - gatherer ?scout - scout ?attacker - attacker)
+  )
+  (:task collect
+    :parameters (?gatherer - gatherer ?from - location ?to - location)
+  )
+  (:task find
+    :parameters (?scout - scout ?from - location ?to - location)
+  )
+  (:task attack
+    :parameters (?attacker - attacker ?from - location ?to - location)
+  )
+  (:task visit
+    :parameters (?scout - scout)
+  )
+
+  (:method visit
+    :parameters ( ?scout - scout ?from - location ?to - location
+    )
+    :task
+    (visit ?scout)
+    :precondition (and
+      (on ?scout ?from)
+      (not (visited ?to))
+    )
+    :ordered-subtasks
+    (and
+      (visit-scout ?scout ?from ?to)
+      (visit-scout ?scout ?to ?from)
+    )
+  )
+
+  (:method find-gather
+    :parameters ( ?gatherer - gatherer ?scout - scout ?enemy - enemy ?resource - resource ?from - location ?to - location
+    )
+    :task
+    (grow ?gatherer ?scout)
+    :precondition (and
+      (on ?scout ?from)
+      (on ?gatherer ?from)
+      (not (exist ?enemy ?to))
+      (empty ?gatherer)
+    )
+    :ordered-subtasks
+    (and
+      (find ?scout ?from ?to)
+      (collect ?gatherer ?from ?to)
+    )
+  )
+
+  (:method find-gather-attacker
+    :parameters ( ?gatherer - gatherer ?scout - scout ?attacker - attacker ?enemy - enemy ?resource - resource ?from - location ?to - location
+    )
+    :task
+    (grow ?gatherer ?scout ?attacker)
+    :precondition (and
+      (on ?scout ?from)
+      (on ?gatherer ?from)
+      (on ?attacker ?from)
+      (exist ?enemy ?to)
+      (empty ?gatherer)
+    )
+    :ordered-subtasks
+    (and
+      (find ?scout ?from ?to)
+      (attack ?attacker ?from ?to)
+      (collect ?gatherer ?from ?to)
+    )
+  )
+
+  (:method collect
+    :parameters (?gatherer - gatherer ?resource - resource ?enemy - enemy ?from - location ?to - location)
+    :task
+    (collect ?gatherer ?from ?to)
+    :precondition (and
+      (on ?gatherer ?from)
+      (on ?resource ?to)
+      (empty ?gatherer)
+      (not (exist ?enemy ?to))
+    )
+    :ordered-subtasks
+    (and
+      (move ?gatherer ?from ?to)
+      (pickup ?gatherer ?resource)
+      (move ?gatherer ?to ?from)
+      (drop ?gatherer ?resource)
+    )
+  )
+
+  (:method find-not-enemy
+    :parameters (?scout - scout ?resource - resource ?enemy - enemy ?from - location ?to - location)
+    :task
+    (find ?scout ?from ?to)
+    :precondition (and
+      (on ?scout ?from)
+      (not (exist ?enemy ?to))
+    )
+    :ordered-subtasks
+    (and
+      (move-scout ?scout ?from ?to)
+      (map ?scout ?resource ?enemy ?to)
+      (move-scout ?scout ?to ?from)
+    )
+  )
+
+  (:method find-enemy
+    :parameters (?scout - scout ?resource - resource ?enemy - enemy ?from - location ?to - location)
+    :task
+    (find ?scout ?from ?to)
+    :precondition (and
+      (on ?scout ?from)
+      (exist ?enemy ?to)
+    )
+    :ordered-subtasks
+    (and
+      (move-scout ?scout ?from ?to)
+      (map-enemy ?scout ?resource ?enemy ?to)
+      (move-scout ?scout ?to ?from)
+    )
+  )
+
+  (:method attack
+    :parameters (?attacker - attacker ?enemy - enemy ?from - location ?to - location)
+    :task
+    (attack ?attacker ?from ?to)
+    :precondition (and
+      (on ?attacker ?from)
+      (exist ?enemy ?to)
+    )
+    :ordered-subtasks
+    (and
+      (move-attacker ?attacker ?from ?to)
+      (kill ?attacker ?enemy ?to)
+      (move-attacker ?attacker ?to ?from)
+    )
+  )
+
+  (:action pickup
+    :parameters (?gatherer - gatherer ?resource - resource)
+    :precondition (and
+      (not (have ?gatherer ?resource))
+      (empty ?gatherer)
+    )
+    :effect (and
+      (not (empty ?gatherer))
+      (have ?gatherer ?resource)
+    )
+  )
+
+  (:action drop
+    :parameters (?gatherer - gatherer ?resource - resource)
+    :precondition (and
+      (have ?gatherer ?resource)
+      (not (empty ?gatherer))
+    )
+    :effect (and
+      (empty ?gatherer)
+      (not (have ?gatherer ?resource))
+    )
+  )
+
+  (:action move
+    :parameters (?gatherer - gatherer ?from - location ?to - location)
+    :precondition (and
+      (on ?gatherer ?from)
+      (not (on ?gatherer ?to))
+    )
+    :effect (and
+      (on ?gatherer ?to)
+      (not (on ?gatherer ?from))
+    )
+  )
+
+  (:action move-scout
+    :parameters (?scout - scout ?from - location ?to - location)
+    :precondition (and
+      (on ?scout ?from)
+      (not (on ?scout ?to))
+    )
+    :effect (and
+      (on ?scout ?to)
+      (not (on ?scout ?from))
+    )
+  )
+
+  (:action visit-scout
+    :parameters (?scout - scout ?from - location ?to - location)
+    :precondition (and
+      (on ?scout ?from)
+      (not (on ?scout ?to))
+    )
+    :effect (and
+      (on ?scout ?to)
+      (not (on ?scout ?from))
+      (visited ?to)
+    )
+  )
+
+  (:action move-attacker
+    :parameters (?attacker - attacker ?from - location ?to - location)
+    :precondition (and
+      (on ?attacker ?from)
+      (not (on ?attacker ?to))
+    )
+    :effect (and
+      (on ?attacker ?to)
+      (not (on ?attacker ?from))
+    )
+  )
+
+  (:action map
+    :parameters (?scout - scout ?resource - resource ?enemy - enemy ?location - location)
+    :precondition (and
+      (on ?scout ?location)
+      (exist ?resource ?location)
+      (not (exist ?enemy ?location))
+    )
+    :effect (on ?resource ?location)
+  )
+
+  (:action map-enemy
+    :parameters (?scout - scout ?resource - resource ?enemy - enemy ?location - location)
+    :precondition (and
+      (on ?scout ?location)
+      (exist ?resource ?location)
+      (exist ?enemy ?location)
+    )
+    :effect (and
+      (on ?resource ?location)
+      (on ?enemy ?location)
+    )
+  )
+
+  (:action kill
+    :parameters (?attacker - attacker ?enemy - enemy ?location - location)
+    :precondition (and
+      (on ?attacker ?location)
+      (on ?enemy ?location)
+    )
+    :effect (and
+      (not (exist ?enemy ?location))
+      (not (on ?enemy ?location))
+    )
+  )
+)

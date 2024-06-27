@@ -1,0 +1,28 @@
+(define (problem pb1)
+    (:domain basic)
+    (:objects
+        gatherer - gatherer
+        scout - scout
+        attacker - attacker
+        enemy - enemy
+        wood - resource
+        gold - resource
+        base - location
+        forest - location
+        mine - location
+    )
+    (:init
+        (on gatherer base)
+        (on scout base)
+        (on attacker base)
+        (empty gatherer)
+        ; (exist wood forest)
+        ; (exist enemy mine)
+    )
+    (:htn
+        :tasks
+        (and
+            (grow gatherer scout attacker)
+        )
+    )
+)
